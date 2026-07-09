@@ -89,7 +89,7 @@ class User extends Connection
 
         if (!isset($userData['id'])) {
             return [
-                "status" => "error", 
+                "status" => "error",
                 "message" => "Critical Server Error: 'id' column not found in the database return."
             ];
         }
@@ -100,7 +100,7 @@ class User extends Connection
                 "status" => "success",
                 "message" => "Login successful",
                 "api_token" => $userData[$this->column3],
-                "user_id" => $userData['id']
+                "user_id" => $userData['user_id']
             ];
         } else {
             return ["status" => "error", "message" => "Incorrect password"];
