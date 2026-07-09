@@ -19,10 +19,10 @@ class GetMessagesApi
 
     public function processRequest()
     {
-
+        // 1. Fetch the raw array of messages from the Model
         $messages = $this->messageModel->getAllMessages();
 
-
+        // 2. Send them back directly without modifying them
         echo json_encode([
             "status" => "success",
             "data" => $messages

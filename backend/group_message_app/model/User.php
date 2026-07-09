@@ -1,8 +1,8 @@
 <?php
-include("../db/Connection.php");
-include("../trait/BasicOperation.php");
-include("../trait/Validate.php");
-include("../trait/HashPassword.php");
+include_once("../db/Connection.php");
+include_once("../trait/BasicOperation.php");
+include_once("../trait/Validate.php");
+include_once("../trait/HashPassword.php");
 
 class User extends Connection
 {
