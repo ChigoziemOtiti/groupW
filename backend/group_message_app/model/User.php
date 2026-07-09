@@ -87,10 +87,10 @@ class User extends Connection
             return ["status" => "error", "message" => "User does not exist Try registering first"];
         }
 
-        if (!isset($userData['id'])) {
+        if (!isset($userData['user_id'])) {
             return [
                 "status" => "error",
-                "message" => "Critical Server Error: 'id' column not found in the database return."
+                "message" => "Critical Server Error: 'user_id' column not found in the database return."
             ];
         }
 
