@@ -82,4 +82,18 @@ trait BasicOperation
 
         return $result->fetch_all(MYSQLI_ASSOC);
     }
+
+
+    //students operations 
+
+    public function InsertStudent($first_name, $last_name, $middle_name, $gender, $matric_no, $email, $hashed_password, $dept_id, $fac_id)
+    {
+        $sql = "INSERT INTO Students(first_name, last_name, middle_name, gender, matric_no, email, password, department_id, faculty_id) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?,? )";
+
+        $prepare = $this->connection->prepare($sql);
+
+        $prepare->bind_param("sssssssii", $first_name, $last_name, $middle_name, $gender, $matric_no, $email, $hashed_password, $dept_id, $fac_id);
+
+        return $prepare->execute();
+    }
 }

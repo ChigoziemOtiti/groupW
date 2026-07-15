@@ -25,12 +25,17 @@ SET FOREIGN_KEY_CHECKS = 1;
 TRUNCATE TABLE departments;
 
 CREATE TABLE Students (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     middle_name VARCHAR(50) NULL,
+    gender ENUM('Male', 'Female') NOT NULL,
+    matric_no VARCHAR(15) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    department_id INT NOT NULL,
     faculty_id INT NOT NULL,
+    FOREIGN KEY (department_id) REFERENCES departments (department_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (faculty_id) REFERENCES faculties (faculty_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
