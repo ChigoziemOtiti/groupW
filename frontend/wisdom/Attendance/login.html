@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Login</title>
+    <link href="../bootstrap/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #FAFAFA; color: #062A39; }
+        .card { border: none; box-shadow: 0 4px 12px rgba(6, 42, 57, 0.1); border-radius: 8px; }
+        .card-header-custom { background-color: #062A39; color: #FAFAFA; border-radius: 8px 8px 0 0 !important; }
+        .btn-custom { background-color: #00B4D5; color: #FAFAFA; border: none; font-weight: 600; }
+        .btn-custom:hover { background-color: #062A39; color: #FAFAFA; }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center vh-100">
+
+    <div class="container" style="max-width: 450px;">
+        
+        <!-- Loading spinner shown while checking database -->
+        <div id="loadingState" class="text-center">
+            <div class="spinner-border text-primary mb-2" role="status" style="color: #00B4D5 !important;"></div>
+            <p>Checking system status...</p>
+        </div>
+
+        <!-- Hidden by default, shown if users exist -->
+        <div class="card d-none" id="loginCard">
+            <div class="card-header card-header-custom p-4 text-center">
+                <h4 class="mb-0 fw-bold">Attendance System</h4>
+            </div>
+            <div class="card-body p-4">
+                <div id="loginAlert" class="alert d-none" role="alert"></div>
+
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-medium">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-medium">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-custom w-100 py-2" id="loginBtn">
+                        <span class="spinner-border spinner-border-sm d-none" id="loginSpinner" role="status"></span>
+                        <span id="loginBtnText">Sign In</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = "http://localhost:8000/api/";
+
+        window.onload = async function() {
+            const response = await fetch(baseUrl + "GetUser.php");
+            const result = await response.json();
+
+            const loadingState = document.getElementById("loadingState");
+            const loginCard = document.getElementById("loginCard");
+
+            // If the database returns false or an empty array, go to seed page
+            if (!result.data || result.data.length === 0) {
+                window.location.href = "seed.html";
+            } else {
+                // Users exist, hide loader and show login form
+                loadingState.className = "d-none";
+                loginCard.className = "card";
+            }
+        };
+
+        document.getElementById("loginForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const formData = new FormData(form);
+            const btn = document.getElementById("loginBtn");
+            const spinner = document.getElementById("loginSpinner");
+            const text = document.getElementById("loginBtnText");
+            const alertBox = document.getElementById("loginAlert");
+
+            btn.disabled = true;
+            spinner.className = "spinner-border spinner-border-sm";
+            text.textContent = "Authenticating...";
+            alertBox.className = "alert d-none";
+
+            const response = await fetch(baseUrl + "LoginUser.php", {
+                method: "POST",
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.status === "success") {
+                // Simulate storing token and move to dashboard
+                localStorage.setItem("user_token", result.token);
+                window.location.href = "users.html";
+            } else {
+                btn.disabled = false;
+                spinner.className = "spinner-border spinner-border-sm d-none";
+                text.textContent = "Sign In";
+                alertBox.className = "alert alert-danger";
+                alertBox.textContent = result.message;
+            }
+        });
+    </script>
+</body>
+</html>

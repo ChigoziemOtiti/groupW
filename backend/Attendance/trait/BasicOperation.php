@@ -96,4 +96,28 @@ trait BasicOperation
 
         return $prepare->execute();
     }
+
+    // add user
+    public function InsertUser($first_name, $last_name, $middle_name, $email, $password, $role, $tokens, $active)
+    {
+        $sql = "INSERT INTO users(first_name, last_name, middle_name, email, password, role, tokens,active) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)";
+        $prepare = $this->connection->prepare($sql);
+        $prepare->bind_param("ssssssss", $first_name, $last_name, $middle_name, $email, $password, $role, $tokens, $active);
+        return $prepare->execute();
+    }
+
+    public function getSingleRecord(string $table, string $column, string $value)
+    {
+        $sql = "SELECT * FROM $table WHERE $column = ? LIMIT 1";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("s", $value);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            return $result->fetch_assoc();
+        }
+
+        return false;
+    }
 }

@@ -39,3 +39,18 @@ CREATE TABLE Students (
     FOREIGN KEY (faculty_id) REFERENCES faculties (faculty_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    middle_name VARCHAR(50) NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('Admin', 'Moderator') NOT NULL,
+    tokens VARCHAR(255) NOT NULL,
+    active ENUM('True', 'false') NOT NULL
+) 
+
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE users;
+SET FOREIGN_KEY_CHECKS = 1;
