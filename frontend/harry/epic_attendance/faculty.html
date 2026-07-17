@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Faculties</title>
+  <!-- Standard Bootstrap 5 CSS -->
+  <link href="../group_message_app/bootstrap/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family:
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+    }
+
+    .sidebar {
+      min-height: 100vh;
+      background-color: #212529;
+    }
+
+    .sidebar a {
+      color: #adb5bd;
+      text-decoration: none;
+      padding: 10px 15px;
+      display: block;
+      border-radius: 4px;
+      margin-bottom: 5px;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      background-color: #343a40;
+      color: #ffffff;
+    }
+
+    .card {
+      border: none;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="d-flex">
+    <!-- Sidebar Navigation -->
+    <div class="sidebar p-3" style="width: 250px">
+      <h5 class="text-white mb-4 fw-bold">Admin Portal</h5>
+      <a href="faculty.html" class="active">Faculties</a>
+      <a href="department.html">Departments</a>
+      <a href="users.html">Users</a>
+      <hr class="text-secondary" />
+      <a href="#" onclick="logout()" class="text-danger">Logout</a>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-grow-1 p-4 p-md-5">
+      <div class="row">
+        <!-- Add New Faculty Form -->
+        <div class="col-md-5 mb-4">
+          <div class="card p-4">
+            <h5 class="fw-bold mb-4">Add New Faculty</h5>
+
+            <div id="alertBox" class="alert d-none" role="alert"></div>
+
+            <form id="facultyForm">
+              <div class="mb-3">
+                <label for="facultyname" class="form-label fw-medium">Faculty Name</label>
+                <input type="text" class="form-control bg-light" id="facultyname" name="facultyname" required
+                  placeholder="e.g. Computing" />
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" id="submitBtn">
+                <span class="spinner-border spinner-border-sm d-none" id="btnSpinner" role="status"
+                  aria-hidden="true"></span>
+                <span id="btnText">Add Faculty</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Existing Faculties Table -->
+        <div class="col-md-7">
+          <div class="card p-4">
+            <h5 class="fw-bold mb-4">Existing Faculties</h5>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID</th>
+                    <th>Faculty Name</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="facultyTableBody">
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-4">
+                      Loading data...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Faculty Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-bottom-0">
+          <h5 class="modal-title fw-bold">Edit Faculty</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editFacultyForm">
+            <input type="hidden" id="edit_faculty_id" />
+            <div class="mb-4">
+              <label for="edit_name" class="form-label fw-medium">Faculty Name</label>
+              <input type="text" class="form-control bg-light" id="edit_name" required />
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" id="editSubmitBtn">
+              <span class="spinner-border spinner-border-sm d-none" id="editBtnSpinner" role="status"
+                aria-hidden="true"></span>
+              <span id="editBtnText">Save Changes</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../group_message_app/bootstrap/js/bootstrap.bundle.js"></script>
+  <script>
+    var baseUrl = "http://localhost:8000/api/";
+
+    function logout() {
+      localStorage.removeItem("access_token");
+      window.location.href = "login.html";
+    }
+
+    // Fetch Faculties Logic
+    async function fetchFaculties() {
+      try {
+        var response = await fetch(baseUrl + "GetFaculty.php");
+        var result = await response.json();
+        var tbody = document.getElementById("facultyTableBody");
+        tbody.innerHTML = "";
+
+        if (result.status === "success" && result.data) {
+          for (var i = 0; i < result.data.length; i++) {
+            var faculty = result.data[i];
+            var tr = document.createElement("tr");
+
+            tr.innerHTML =
+              "<td>#" +
+              faculty.faculty_id +
+              "</td>" +
+              "<td class='fw-medium'>" +
+              faculty.name +
+              "</td>" +
+              "<td class='text-end'>" +
+              "<button class='btn btn-sm btn-outline-secondary' " +
+              "onclick='openEditModal(" +
+              faculty.faculty_id +
+              ', "' +
+              faculty.name +
+              "\")'>Edit</button>" +
+              "</td>";
+
+            tbody.appendChild(tr);
+          }
+        } else {
+          tbody.innerHTML =
+            '<tr><td colspan="3" class="text-center text-muted py-4">No faculties found.</td></tr>';
+        }
+      } catch (error) {
+        document.getElementById("facultyTableBody").innerHTML =
+          '<tr><td colspan="3" class="text-center text-danger py-4">Error loading data.</td></tr>';
+      }
+    }
+
+    // Add Faculty Logic
+    document
+      .getElementById("facultyForm")
+      .addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        var form = e.target;
+        var formData = new FormData(form);
+        var submitBtn = document.getElementById("submitBtn");
+        var btnSpinner = document.getElementById("btnSpinner");
+        var btnText = document.getElementById("btnText");
+        var alertBox = document.getElementById("alertBox");
+
+        submitBtn.disabled = true;
+        btnSpinner.className = "spinner-border spinner-border-sm"; // Shows spinner by removing d-none
+        btnText.textContent = "Saving...";
+        alertBox.className = "alert d-none";
+
+        try {
+          var response = await fetch(baseUrl + "AddFaculty.php", {
+            method: "POST",
+            body: formData,
+          });
+          var result = await response.json();
+
+          submitBtn.disabled = false;
+          btnSpinner.className = "spinner-border spinner-border-sm d-none"; // Hides spinner
+          btnText.textContent = "Add Faculty";
+
+          if (result.status === "success" || result.status === 201) {
+            alertBox.className = "alert alert-success";
+            alertBox.textContent =
+              result.message || "Faculty added successfully";
+            form.reset();
+            fetchFaculties();
+          } else {
+            alertBox.className = "alert alert-danger";
+            alertBox.textContent = result.message;
+          }
+        } catch (error) {
+          submitBtn.disabled = false;
+          btnSpinner.className = "spinner-border spinner-border-sm d-none";
+          btnText.textContent = "Add Faculty";
+          alertBox.className = "alert alert-danger";
+          alertBox.textContent = "Network Error.";
+        }
+      });
+
+    // Open Edit Modal Logic
+    function openEditModal(id, name) {
+      document.getElementById("edit_faculty_id").value = id;
+      document.getElementById("edit_name").value = name;
+
+      var editModal = new bootstrap.Modal(
+        document.getElementById("editModal"),
+      );
+      editModal.show();
+    }
+
+    // Edit Faculty Submit Logic
+    document
+      .getElementById("editFacultyForm")
+      .addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        var id = document.getElementById("edit_faculty_id").value;
+        var name = document.getElementById("edit_name").value;
+        var submitBtn = document.getElementById("editSubmitBtn");
+        var btnSpinner = document.getElementById("editBtnSpinner");
+        var btnText = document.getElementById("editBtnText");
+
+        submitBtn.disabled = true;
+        btnSpinner.className = "spinner-border spinner-border-sm";
+        btnText.textContent = "Saving...";
+
+        await editFaculty(id, name);
+
+        submitBtn.disabled = false;
+        btnSpinner.className = "spinner-border spinner-border-sm d-none";
+        btnText.textContent = "Save Changes";
+
+        var modalElement = document.getElementById("editModal");
+        var editModal = bootstrap.Modal.getInstance(modalElement);
+        editModal.hide();
+      });
+
+    // Edit Faculty API Call
+    async function editFaculty(facultyId, newName) {
+      var payload = {
+        faculty_id: parseInt(facultyId),
+        name: newName,
+      };
+
+      try {
+        var response = await fetch(baseUrl + "EditFaculty.php", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        var result = await response.json();
+
+        if (result.status === "success") {
+          fetchFaculties();
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert("Network error occurred while saving.");
+      }
+    }
+
+    window.onload = function () {
+      fetchFaculties();
+    };
+  </script>
+</body>
+
+</html>

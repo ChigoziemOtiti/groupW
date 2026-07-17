@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration | EpicAttendance</title>
+    <link href="../group_message_app/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .loader {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <div id="loader" class="spinner-border text-primary loader" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+
+    <div class="container mt-5 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <div class="card shadow-sm p-4">
+                    <h2 class="mb-4 text-center text-primary">Student Registration</h2>
+
+                    <div id="alertMessage" class="alert d-none" role="alert"></div>
+
+                    <form id="registerForm">
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="first_name" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="last_name" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" id="middle_name">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Matriculation Number *</label>
+                                <input type="text" class="form-control" id="matric_no" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Gender *</label>
+                                <select class="form-select" id="gender" required>
+                                    <option value="" selected disabled>Choose...</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Password *</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Faculty *</label>
+                                <select class="form-select" id="faculty_id" required>
+                                    <option value="" selected disabled>Loading Faculties...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Department *</label>
+                                <select class="form-select" id="department_id" required>
+                                    <option value="" selected disabled>Loading Departments...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Complete Registration</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../group_message_app/bootstrap/js/bootstrap.bundle.js"></script>
+    <script>
+        const BASE_URL = 'http://localhost:8000/api';
+        const loader = document.getElementById('loader');
+        const alertBox = document.getElementById('alertMessage');
+
+        // Toggle Loading Spinner
+        const toggleLoader = (show) => {
+            loader.style.display = show ? 'block' : 'none';
+        };
+
+        // Display Success/Error Messages
+        const showMessage = (message, isError = false) => {
+            alertBox.className = `alert ${isError ? 'alert-danger' : 'alert-success'} d-block`;
+            alertBox.textContent = message;
+            // Auto-hide after 5 seconds
+            setTimeout(() => { alertBox.classList.add('d-none'); }, 5000);
+        };
+
+        // Fetch Faculties and Departments on Page Load
+        async function loadDropdowns() {
+            try {
+                // Fetch Faculties
+                const facRes = await fetch(`${BASE_URL}/GetFaculty.php`);
+                const facData = await facRes.json();
+                const facSelect = document.getElementById('faculty_id');
+                facSelect.innerHTML = '<option value="" selected disabled>Select Faculty</option>';
+                facData.data.forEach(f => {
+                    facSelect.innerHTML += `<option value="${f.faculty_id}">${f.name}</option>`;
+                });
+
+                // Fetch Departments
+                const deptRes = await fetch(`${BASE_URL}/GetDepartment.php`);
+                const deptData = await deptRes.json();
+                const deptSelect = document.getElementById('department_id');
+                deptSelect.innerHTML = '<option value="" selected disabled>Select Department</option>';
+                deptData.data.forEach(d => {
+                    deptSelect.innerHTML += `<option value="${d.department_id}">${d.name}</option>`;
+                });
+            } catch (err) {
+                console.error("Failed to load dropdown data", err);
+                showMessage("Database connection error. Dropdowns failed to load.", true);
+            }
+        }
+
+        // Handle Registration Form Submission
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleLoader(true);
+            alertBox.classList.add('d-none'); // Hide previous messages
+
+            // Construct FormData matching your PHP $_POST requirements
+            const formData = new FormData();
+            formData.append('first_name', document.getElementById('first_name').value);
+            formData.append('last_name', document.getElementById('last_name').value);
+            formData.append('middle_name', document.getElementById('middle_name').value);
+            formData.append('gender', document.getElementById('gender').value);
+            formData.append('matric_no', document.getElementById('matric_no').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('password', document.getElementById('password').value);
+            formData.append('faculty_id', document.getElementById('faculty_id').value);
+            formData.append('department_id', document.getElementById('department_id').value);
+
+            try {
+                // Adjust this URL if your PHP file has a different name
+                const response = await fetch(`${BASE_URL}/RegisterStudent.php`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.status === 201 || result.status === 'success') {
+                    showMessage("Registration successful!");
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showMessage(result.message || "Registration failed. Please check your inputs.", true);
+                }
+            } catch (err) {
+                console.error('Registration Error:', err);
+                showMessage("A network error occurred. Please try again.", true);
+            } finally {
+                toggleLoader(false);
+            }
+        });
+
+        // Initialize page
+        loadDropdowns();
+    </script>
+</body>
+
+</html>
