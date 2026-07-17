@@ -120,4 +120,14 @@ trait BasicOperation
 
         return false;
     }
+
+    public function setOTP(string $email, ?string $otp_code, ?string $otp_expiry) 
+    {
+        $sql = "UPDATE users SET otp_code = ?, otp_expiry = ? WHERE email = ?";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("sss", $otp_code, $otp_expiry, $email);
+        $result = $stmt->execute();
+        
+        return $result !== false;
+    }
 }

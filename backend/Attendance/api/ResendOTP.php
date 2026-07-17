@@ -14,15 +14,19 @@ include_once('../model/User.php');
 $userModel = new User();
 
 $email = isset($_POST['email']) ? trim($_POST['email']) : '';
-$password = isset($_POST['password']) ? trim($_POST['password']) : '';
 
-$result = $userModel->loginUser($email, $password);
+if (empty($email)) {
+    http_response_code(400);
+    echo json_encode(["status" => "error", "message" => "Email is required to resend OTP"]);
+    exit();
+}
 
-// UPDATE: Changed 'success' to 'otp_sent'
-if (isset($result['status']) && $result['status'] === 'otp_sent') {
+$result = $userModel->resendOTP($email);
+
+if (isset($result['status']) && $result['status'] === 'success') {
     http_response_code(200);
 } else {
-    http_response_code(401);
+    http_response_code(400);
 }
 
 echo json_encode($result);
