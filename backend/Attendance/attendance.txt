@@ -1,0 +1,75 @@
+=============================================================================
+ATTENDANCE SYSTEM: DEVELOPMENT UPDATE & CHANGELOG
+Date: July 23, 2026
+=============================================================================
+
+OVERVIEW
+This document outlines the complete end-to-end development of the core attendance verification engine, including backend APIs, database schema updates, and frontend user interfaces. The system now fully supports passwordless authentication, geographic restriction (geofencing), and hardware device locking.
+
+1. DATABASE SCHEMA UPDATES
+To support the expanded registration requirements and hardware locking, the "students" table was modified. The following columns were successfully added:
+* middle_name (VARCHAR, nullable)
+* gender (VARCHAR)
+* current_device_id (VARCHAR, used for locking a physical phone to a student)
+* department_id (INT, for relational mapping)
+* faculty_id (INT, for relational mapping)
+
+2. BACKEND MODELS & APIS DEVELOPED
+* RegisterStudent.php (Updated): Removed password requirements. Added dynamic fields for Level, Faculty, Department, and the hidden Device ID to establish the initial hardware lock upon registration.
+* StartSession.php (New): Admin API to initialize a class. Captures the course code and the admin's exact GPS coordinates to act as the classroom anchor. Implements strict server-side timestamps (Africa/Lagos) to prevent frontend clock manipulation.
+* SendAttendanceOTP.php (New): Student API that verifies the matriculation number, generates a secure 6-digit OTP, sets a strict 10-minute database expiration, and dispatches the code via email using the integrated PHPMailer trait.
+* MarkAttendance.php (New): The core verification engine. This API handles the heavy lifting by authenticating four strict security parameters before marking a student present. 
+
+3. FRONTEND UI & UX INTEGRATIONS
+* Student Registration (register.html): Rebuilt with a responsive Bootstrap 5 grid. Integrated dynamic, client-side caching for Faculty and Department dropdowns to eliminate redundant API calls. Implemented hidden localStorage logic to seamlessly generate and bind a unique Device ID to the student upon form submission.
+* Mark Attendance (attendance.html): Designed a progressive two-step UI. Step 1 requests the OTP. Step 2 (revealed only after email dispatch) requests the OTP input and automatically captures the student's HTML5 Geolocation before sending the final payload.
+* Unified Admin Dashboard (dashboard.html): Merged the "Start Class" module and the "System Users" management table into a single, side-by-side administrative interface. Both components share a unified alert system for clean, non-intrusive notifications.
+
+4. SECURITY ARCHITECTURE IMPLEMENTED
+* Hardware Locking: The system binds a unique ID (stored in localStorage) to the student's database row during registration. The attendance API will reject requests if the submitting device does not perfectly match the registered device.
+* Geofencing (Haversine Formula): The backend calculates the geographic curvature distance between the student's phone and the admin's starting coordinates. Students further than 50 meters from the classroom are automatically blocked.
+* Destructive Authentication: OTPs are immediately cleared from the database upon successful verification to prevent replay attacks or students sharing codes with peers.
+* Implicit Duplicate Protection: The database relies on a UNIQUE constraint for attendance records, preventing the system from ever double-counting a student for the same session.
+
+=============================================================================
+END OF REPORT
+=============================================================================
+
+
+# API Documentation: Attendance Verification Engine
+
+## Overview
+This document details the RESTful API endpoints developed for the Passwordless Attendance System. The architecture relies on standard HTTP methods, accepts `multipart/form-data` payloads (via JavaScript `FormData`), and strictly returns JSON responses.
+
+**Base URL:** `http://localhost:8000/api/`
+**Content-Type:** `application/json; charset=UTF-8`
+
+---
+
+## 1. Student Registration API
+**Endpoint:** `/RegisterStudent.php`
+**Method:** `POST`
+
+### Description
+Registers a new student in the database. This endpoint eliminates traditional passwords and instead requires a unique hardware device ID. Once registered, the student's profile is permanently locked to this specific physical device to prevent proxy attendance.
+
+### Request Parameters (FormData)
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `first_name` | String | Yes | Student's given name. |
+| `last_name` | String | Yes | Student's family name. |
+| `middle_name` | String | No | Student's middle name. |
+| `gender` | String | Yes | Enum: "Male" or "Female". |
+| `matric_no` | String | Yes | Unique university matriculation number. |
+| `email` | String | Yes | Valid university email address. |
+| `level` | Integer | Yes | Academic level (e.g., 100, 200, 300). |
+| `department_id` | Integer | Yes | Foreign key mapping to the departments table. |
+| `faculty_id` | Integer | Yes | Foreign key mapping to the faculties table. |
+| `current_device_id` | String | Yes | Auto-generated alphanumeric string from the client's `localStorage` (e.g., `DEV_10cej0ugiq7`). |
+
+### Success Response (HTTP 201 Created)
+```json
+{
+    "status": "success",
+    "message": "Student registered successfully."
+}
