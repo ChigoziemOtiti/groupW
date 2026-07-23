@@ -11,6 +11,7 @@ trait MailerTrait
         $mail = new PHPMailer(true);
 
         try {
+            // Server settings
             $mail->SMTPDebug  = 0;
             $mail->isSMTP();
             $mail->Host       = 'smtp-wisdomit.alwaysdata.net';
